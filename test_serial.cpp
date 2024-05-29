@@ -76,17 +76,16 @@ primaryEquation constraint_generator(size_t size, size_t cnumber, size_t mbound,
     return eq;
 }
 
-void constraint_serial() {
+void constraint_serial(std::string matrixFolder, size_t numConstraints) {
     clock_t start_time, stop_time;
     double totalTime;
     start_time = clock();
 
-    std::string matrixfolder = "bcsstk21";
-    std::string matrixfile = matrixfolder + ".mtx";
-    auto K = Matrix<double>(matrixfolder + "/" + matrixfile);
+    std::string matrixfile = matrixFolder + ".mtx";
+    auto K = Matrix<double>(matrixFolder + "/" + matrixfile);
     size_t nnode = K[0].size();
 
-    primaryEquation eq = constraint_generator(nnode, 3200, 3);
+    primaryEquation eq = constraint_generator(nnode, numConstraints, 3);
 
     auto T = TransformationMatrix<double>(eq, nnode);
 
@@ -105,8 +104,11 @@ void constraint_serial() {
 }
 
 int main(int argc, char* argv[]) {
-
-    constraint_serial();
+    int numConstraints;
+    sscanf(argv[2], "%d", &numConstraints);
     
+    // Run parallel algorithm
+    constraint_serial(argv[1], numConstraints);
+
     return 0;
 }

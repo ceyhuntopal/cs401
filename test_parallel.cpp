@@ -73,7 +73,7 @@ primaryEquation constraint_generator(size_t size, size_t cnumber, size_t mbound,
     return eq;
 }
 
-void constraint_parallel() {
+void constraint_parallel(std::string matrixFolder, size_t numConstraints) {
 
     // Initialize process rank and global process number as size
     int rank, size, nnode;
@@ -86,13 +86,15 @@ void constraint_parallel() {
 
     if (rank == 0) {
         // Read K matrix
-        std::string matrixfolder = "bcsstk21";
-        std::string matrixfile = matrixfolder + ".mtx";
-        auto K = Matrix<double>(matrixfolder + "/" + matrixfile);
+        std::string matrixfile = matrixFolder + ".mtx";
+        auto K = Matrix<double>(matrixFolder + "/" + matrixfile);
         nnode = K[0].size();
-
+        if (nnode < numConstraints) {
+            std::cerr << "Constraint number cannot be bigger than matrix size" << std::endl;
+            std::abort();
+        }
         // Construct constraint equation system
-        eq = constraint_generator(nnode, 3200, 3);
+        eq = constraint_generator(nnode, numConstraints, 3); // Max. three master terms in an equation
         serialized_eq = eq.serialize();
         eq_size = serialized_eq.size();
     }
@@ -140,7 +142,7 @@ void constraint_parallel() {
     // Prepare a buffer for the reduced result
     std::vector<double> reduced_flat_matrix(flat_matrix.size());
 
-     // Perform the non-blocking allreduce operation
+    // Perform the non-blocking allreduce operation
     MPI_Request request;
     MPI_Iallreduce(flat_matrix.data(), reduced_flat_matrix.data(), flat_matrix.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &request);
 
@@ -149,11 +151,12 @@ void constraint_parallel() {
     // Wait for the non-blocking allreduce to complete
     MPI_Wait(&request, MPI_STATUS_IGNORE);
 
-
     // Convert the flattened result back into matrix form
     size_t rows = T.get().rows;
     size_t cols = T.get().cols;
     Matrix<double> reduced_matrix(rows, cols);
+
+    # pragma omp parallel for
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) {
             reduced_matrix[i][j] = reduced_flat_matrix[i * cols + j] - (i == j ? size - 1 : 0);
@@ -170,9 +173,11 @@ void constraint_parallel() {
 
 int main(int argc, char* argv[]) {
     MPI_Init(&argc, &argv);
-
+    int numConstraints;
+    sscanf(argv[2], "%d", &numConstraints);
+    
     // Run parallel algorithm
-    constraint_parallel();
+    constraint_parallel(argv[1], numConstraints);
 
     MPI_Finalize();
 
