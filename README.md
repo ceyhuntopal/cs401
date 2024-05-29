@@ -4,7 +4,7 @@
 </head>
 <body>
 
-<h1>Parallel Constraint Application with MPI</h1>
+<h1>Parallel Constraint Application with MPI - Testing Stage</h1>
 
 <p>This project demonstrates a parallel implementation of constraint application using MPI for inter-process communication and OpenMP for multi-threading within each process. 
   The <code>primaryEquation</code> object is generated on the root process and broadcast to all other processes to ensure consistency across the distributed system. 
