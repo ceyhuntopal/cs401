@@ -8,7 +8,7 @@
 
 <p>This project demonstrates a parallel implementation of constraint application using MPI for inter-process communication and OpenMP for multi-threading within each process. 
   The <code>primaryEquation</code> object is generated on the root process and broadcast to all other processes to ensure consistency across the distributed system. 
-  At this stage, application only supports matrices given in Matrix Market <code>(.mtx)</code> file format</p>
+  At this stage, application only supports matrices given in Matrix Market <code>(.mtx)</code> file format.</p>
 
 <h2>Requirements</h2>
 <ul>
